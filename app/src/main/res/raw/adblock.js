@@ -23,6 +23,11 @@
           const removeSponsored = (root = document) => {
             root.querySelectorAll(selector).forEach(el => el.remove());
             removeRoleAds(root);
+            // uBO fb.txt: explicit Sponsored link survives obfuscation/layout renames
+            const links = [];
+            if (root instanceof HTMLElement && root.matches('a[aria-label="Sponsored"]')) links.push(root);
+            root.querySelectorAll('a[aria-label="Sponsored"]').forEach(el => links.push(el));
+            links.forEach(el => el.closest('div[aria-posinset], article, div[data-tracking-duration-id]')?.remove());
           };
 
           removeSponsored();
@@ -84,7 +89,10 @@
         if (sponsoredRegex.test(t)) return true;
         const cleaned = t.replace(/[\s·•・.\uF000-\uF8FF\u{F0000}-\u{10FFFF}]+$/u, '').trim().toLowerCase();
         if (cleaned.length < 2) return false; // bare single chars (e.g. "प") FP too easily
-        return sponsoredSet.has(cleaned);
+        if (sponsoredSet.has(cleaned)) return true;
+        // uBO fb.txt: "S-*-p-*-o..." separator obfuscation + paid-attribution variants
+        if (cleaned.replace(/[^a-z]/g, '') === 'sponsored') return true;
+        return cleaned === 'paid partnership' || cleaned.includes('paid for by');
     }
 
     function isSplitSponsored(el) {
