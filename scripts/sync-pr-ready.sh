@@ -74,10 +74,24 @@ for sha in "${COMMITS[@]}"; do
   fi
   if git cherry-pick "$sha" >/dev/null 2>&1; then
     mirrored+=("$sha $subject")
-  else
-    git cherry-pick --abort >/dev/null 2>&1 || true
-    conflicted+=("$sha $subject")
+    continue
   fi
+  git cherry-pick --abort >/dev/null 2>&1 || true
+  # Retry with the package rename mapped back: vip/dh6k/materialbook_fork paths
+  # and package strings become com/eepiemi/materialbook on pr_ready.
+  if git diff "$sha^" "$sha" \
+      | sed -e 's|vip/dh6k/materialbook_fork|com/eepiemi/materialbook|g' \
+            -e 's|vip\.dh6k\.materialbook_fork|com.eepiemi.materialbook|g' \
+      | git apply --3way --exclude='README.md' --exclude='CHANGE.md' \
+          --exclude='app/build.gradle.kts' --exclude='scripts/sync-pr-ready.sh' \
+          --exclude='.github/workflows/sync-pr-ready.yml' >/dev/null 2>&1; then
+    if git add -A && git commit -q -C "$sha"; then
+      mirrored+=("$sha $subject (path-mapped)")
+      continue
+    fi
+    git reset -q --hard HEAD
+  fi
+  conflicted+=("$sha $subject")
 done
 
 if ! $DRY_RUN && [ "${#mirrored[@]}" -gt 0 ]; then
