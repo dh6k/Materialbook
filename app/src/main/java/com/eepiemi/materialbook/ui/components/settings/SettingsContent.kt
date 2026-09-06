@@ -90,7 +90,7 @@ fun SettingsContent(
                     supportingText = stringResource(R.string.open_messenger_desc),
                     isActive = null,
                     onClick = {
-                        val ok = openMessenger(context, "fb-messenger://", messengerPackage.value)
+                        val ok = openMessenger(context, "https://m.me/", messengerPackage.value)
                         if (!ok) {
                             Toast.makeText(
                                 context,
