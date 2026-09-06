@@ -76,7 +76,7 @@ fun MaterialbookWebView(
                 }.onFailure {
                     Toast.makeText(
                         context,
-                        resources.getString(R.string.not_supported),
+                        resources.getString(R.string.messenger_redirect_toast),
                         Toast.LENGTH_SHORT
                     ).show()
                 }

@@ -1,6 +1,7 @@
 package com.eepiemi.materialbook.ui.components.settings
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eepiemi.materialbook.R
 import com.eepiemi.materialbook.ui.viewmodel.SettingsViewModel
 import com.eepiemi.materialbook.utils.rememberAutoDesktop
+import com.eepiemi.materialbook.utils.openMessenger
 
 @Composable
 fun SettingsContent(
@@ -83,6 +85,34 @@ fun SettingsContent(
         SettingsGroup(
             items = listOf(
                 SettingsItem(
+                    icon = Icons.Outlined.Message,
+                    title = stringResource(R.string.open_messenger_title),
+                    supportingText = stringResource(R.string.open_messenger_desc),
+                    isActive = null,
+                    onClick = {
+                        val ok = openMessenger(context, "fb-messenger://", messengerPackage.value)
+                        if (!ok) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.messenger_redirect_toast),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                ),
+                SettingsItem(
+                    icon = Icons.Outlined.Message,
+                    title = stringResource(R.string.messenger_title),
+                    supportingText = messengerPackage.value,
+                    isActive = null,
+                    onClick = { isMessengerDialog = true },
+                )
+            )
+        )
+
+        SettingsGroup(
+            items = listOf(
+                SettingsItem(
                     icon = Icons.Outlined.Shield,
                     title = stringResource(R.string.remove_ads_title),
                     supportingText = stringResource(R.string.hide_sponsored_ads_from_your_feed),
@@ -110,13 +140,6 @@ fun SettingsContent(
                     isActive = null,
                     onClick = { isOpenDialog = true },
                 ),
-                SettingsItem(
-                    icon = Icons.Outlined.Message,
-                    title = stringResource(R.string.messenger_title),
-                    supportingText = messengerPackage.value,
-                    isActive = null,
-                    onClick = { isMessengerDialog = true },
-                )
             )
         )
 
