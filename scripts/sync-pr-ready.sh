@@ -48,6 +48,9 @@ if ! $DRY_RUN; then
   git checkout -q -f "$TARGET"
   git reset -q --hard "origin/$TARGET"
 fi
+mirrored=()
+skipped_rebrand=()
+conflicted=()
 
 for sha in "${COMMITS[@]}"; do
   subject="$(git log -1 --format=%s "$sha")"
