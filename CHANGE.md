@@ -1,3 +1,15 @@
+## Materialbook - v1.1.0
+
+<ins>**Changelog:**</ins>
+
+* Feature: Open Messenger links directly in the Messenger app, with configurable package name in settings.
+* Feature: New "Open Messenger" item at the top of Materialbook Settings.
+* Fix: Catch obfuscated Sponsored + paid-partnership labels, incl. aria-label on desktop.
+* Fix: Tolerate new FB mobile ad label without PUA marker.
+* Fix: Reels hiding for alternative Unicode code point icon.
+* Tweak: Harden adblock with structural signals from uBO-style filters.
+* Tweak: Update app icon, Arabic translations, README.
+
 ## Materialbook - v1.0.0
 
 <ins>**Changelog:**</ins>
