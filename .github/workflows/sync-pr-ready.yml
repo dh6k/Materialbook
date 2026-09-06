@@ -20,14 +20,14 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout pr_ready
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
-          ref: pr_ready
+          ref: main
           fetch-depth: 0
 
-      - name: Fetch main
-        run: git fetch origin main:refs/remotes/origin/main
+      - name: Fetch pr_ready
+        run: git fetch origin pr_ready:refs/remotes/origin/pr_ready
 
       - name: Mirror non-rebrand commits
         id: sync
