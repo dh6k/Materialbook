@@ -78,13 +78,15 @@ for sha in "${COMMITS[@]}"; do
       | sed -e 's|vip/dh6k/materialbook_fork|com/eepiemi/materialbook|g' \
             -e 's|vip\.dh6k\.materialbook_fork|com.eepiemi.materialbook|g' > "$map_patch"
   if [ -s "$map_patch" ] && git apply --3way "$map_patch" >/dev/null 2>&1 \
-      && git add -A && git commit -q -C "$sha"; then
+      && git add -A && git -c user.name="pr-ready-sync" \
+      -c user.email="pr-ready-sync@local" commit -q -C "$sha"; then
     rm -f "$map_patch"
     mirrored+=("$sha $subject (path-mapped)")
     continue
   fi
   rm -f "$map_patch"
   git reset -q --hard HEAD
+  conflicted+=("$sha $subject")
 done
 
 if ! $DRY_RUN && [ "${#mirrored[@]}" -gt 0 ]; then
