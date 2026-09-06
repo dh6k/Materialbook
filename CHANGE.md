@@ -1,3 +1,11 @@
+## Materialbook Fork - v1.2.1
+
+<ins>**Changelog:**</ins>
+
+* Feature: Lock orientation toggle in Materialbook Settings.
+* Fix: Photo viewer no longer black on first open with Sticky Navbar on (viewer holder margin reverted, photo re-centered).
+* Fix: Banner observer redeclaration no longer aborts injected scripts on SPA navigation.
+
 ## Materialbook Fork - v1.2.0
 
 <ins>**Changelog:**</ins>
