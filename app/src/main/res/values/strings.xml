@@ -42,4 +42,8 @@
     <string name="materialbook_settings">Materialbook settings</string>
     <string name="support_my_work">Support my work! ☕</string>
     <string name="not_supported">Not supported</string>
+    <string name="messenger_title">Messenger app</string>
+    <string name="messenger_package_label">Package name</string>
+    <string name="messenger_package_save">Save</string>
+    <string name="messenger_package_reset">Reset</string>
 </resources>

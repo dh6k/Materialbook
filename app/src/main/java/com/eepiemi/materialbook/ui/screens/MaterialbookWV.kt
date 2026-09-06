@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,6 +49,7 @@ import com.eepiemi.materialbook.utils.jsBridge.DownloadBridge
 import com.eepiemi.materialbook.utils.jsBridge.MaterialbookSettings
 import com.eepiemi.materialbook.utils.jsBridge.ThemeChange
 import com.eepiemi.materialbook.utils.jsBridge.MaterialYouBridge
+import com.eepiemi.materialbook.utils.openMessenger
 import com.eepiemi.materialbook.utils.rememberAutoDesktop
 import com.eepiemi.materialbook.utils.rememberImeHeight
 import kotlinx.coroutines.delay
@@ -62,19 +64,27 @@ fun MaterialbookWebView(
     val resources = LocalResources.current
 
     val state = rememberSaveableWebViewState(url)
+    val messengerPkg by settingsVM.messengerPackage.collectAsState()
+    // Stable holder: navigator may keep the first interceptor, so read latest at call time.
+    val currentMessengerPkg by rememberUpdatedState(messengerPkg)
     val navigator = rememberWebViewNavigator(
-        requestInterceptor = ExternalRequestInterceptor { externalUrl ->
-            val intent = Intent(Intent.ACTION_VIEW, externalUrl.toUri())
-            runCatching {
-                context.startActivity(intent)
-            }.onFailure {
-                Toast.makeText(
-                    context,
-                    resources.getString(R.string.not_supported),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+        requestInterceptor = ExternalRequestInterceptor(
+            handleExternalUrl = { externalUrl ->
+                val intent = Intent(Intent.ACTION_VIEW, externalUrl.toUri())
+                runCatching {
+                    context.startActivity(intent)
+                }.onFailure {
+                    Toast.makeText(
+                        context,
+                        resources.getString(R.string.not_supported),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            },
+            tryOpenMessenger = { messengerUrl ->
+                openMessenger(context, messengerUrl, currentMessengerPkg)
+            },
+        )
     )
 
     LaunchedEffect(navigator) {

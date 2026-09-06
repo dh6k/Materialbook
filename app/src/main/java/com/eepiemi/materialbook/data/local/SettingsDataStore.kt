@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.map
+import com.eepiemi.materialbook.utils.DEFAULT_MESSENGER_PACKAGE
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "materialbook_prefs")
 
@@ -26,6 +28,7 @@ class SettingsDataStore(private val context: Context) {
         val HIDE_STORIES = booleanPreferencesKey("hide_stories")
         val HIDE_PEOPLE_YOU_MAY_KNOW = booleanPreferencesKey("hide_people_you_may_know")
         val HIDE_GROUPS = booleanPreferencesKey("hide_groups")
+        val MESSENGER_PACKAGE = stringPreferencesKey("messenger_package")
         val isRevertDesktop = booleanPreferencesKey("is_revert_desktop")
     }
 
@@ -104,5 +107,10 @@ class SettingsDataStore(private val context: Context) {
     val hideGroups = context.dataStore.data.map { it[HIDE_GROUPS] ?: false }
     suspend fun setHideGroups(hideGroups: Boolean) {
         context.dataStore.edit { it[HIDE_GROUPS] = hideGroups }
+    }
+
+    val messengerPackage = context.dataStore.data.map { it[MESSENGER_PACKAGE] ?: DEFAULT_MESSENGER_PACKAGE }
+    suspend fun setMessengerPackage(messengerPackage: String) {
+        context.dataStore.edit { it[MESSENGER_PACKAGE] = messengerPackage }
     }
 }

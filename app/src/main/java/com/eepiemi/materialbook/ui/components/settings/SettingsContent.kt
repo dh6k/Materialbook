@@ -23,12 +23,14 @@ import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DesktopWindows
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Message
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PanoramaWideAngle
 import androidx.compose.material.icons.outlined.Pinch
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,6 +61,7 @@ fun SettingsContent(
 ) {
     val context = LocalContext.current
     var isOpenDialog by rememberSaveable { mutableStateOf(false) }
+    var isMessengerDialog by rememberSaveable { mutableStateOf(false) }
 
     val removeAds = viewModel.removeAds.collectAsState()
     val enableDownloadContent = viewModel.enableDownloadContent.collectAsState()
@@ -69,6 +72,7 @@ fun SettingsContent(
     val pinchToZoom = viewModel.pinchToZoom.collectAsState()
     val materialYou = viewModel.materialYou.collectAsState()
     val amoledBlack = viewModel.amoledBlack.collectAsState()
+    val messengerPackage = viewModel.messengerPackage.collectAsState()
 
     val isAutoDesktop = rememberAutoDesktop()
 
@@ -105,6 +109,13 @@ fun SettingsContent(
                     supportingText = stringResource(R.string.customize_feed),
                     isActive = null,
                     onClick = { isOpenDialog = true },
+                ),
+                SettingsItem(
+                    icon = Icons.Outlined.Message,
+                    title = stringResource(R.string.messenger_title),
+                    supportingText = messengerPackage.value,
+                    isActive = null,
+                    onClick = { isMessengerDialog = true },
                 )
             )
         )
@@ -183,6 +194,61 @@ fun SettingsContent(
                 isOpenDialog = false
             }
         )
+    }
+
+    if (isMessengerDialog) {
+        MessengerPackageDialog(
+            current = messengerPackage.value,
+            onDismiss = { isMessengerDialog = false },
+            onSave = {
+                viewModel.setMessengerPackage(it)
+                isMessengerDialog = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun MessengerPackageDialog(
+    current: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+) {
+    var text by rememberSaveable(current) { mutableStateOf(current) }
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .clip(RoundedCornerShape(24.dp))
+                .background(color = MaterialTheme.colorScheme.surfaceContainer)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.messenger_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it.trim() },
+                label = { Text(stringResource(R.string.messenger_package_label)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = {
+                    text = com.eepiemi.materialbook.utils.DEFAULT_MESSENGER_PACKAGE
+                }) {
+                    Text(stringResource(R.string.messenger_package_reset))
+                }
+                TextButton(onClick = { onSave(text) }) {
+                    Text(stringResource(R.string.messenger_package_save))
+                }
+            }
+        }
     }
 
 }
