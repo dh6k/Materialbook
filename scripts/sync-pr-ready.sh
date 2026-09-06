@@ -75,17 +75,19 @@ for sha in "${COMMITS[@]}"; do
   git cherry-pick --abort >/dev/null 2>&1 || true
   # Retry with the package rename mapped back: vip/dh6k/materialbook_fork paths
   # and package strings become com/eepiemi/materialbook on pr_ready.
-  if git diff "$sha^" "$sha" \
+  # Only app sources are mapped; docs/infra never belong on pr_ready.
+  map_err="$(git diff "$sha^" "$sha" -- 'app/src' \
       | sed -e 's|vip/dh6k/materialbook_fork|com/eepiemi/materialbook|g' \
             -e 's|vip\.dh6k\.materialbook_fork|com.eepiemi.materialbook|g' \
-      | git apply --3way --exclude='README.md' --exclude='CHANGE.md' \
-          --exclude='app/build.gradle.kts' --exclude='scripts/sync-pr-ready.sh' \
-          --exclude='.github/workflows/sync-pr-ready.yml' >/dev/null 2>&1; then
+      | git apply --3way 2>&1)"
+  if [ -z "$map_err" ]; then
     if git add -A && git commit -q -C "$sha"; then
       mirrored+=("$sha $subject (path-mapped)")
       continue
     fi
     git reset -q --hard HEAD
+  else
+    echo "map failed for $sha: $map_err"
   fi
   conflicted+=("$sha $subject")
 done
