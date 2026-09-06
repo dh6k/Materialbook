@@ -82,7 +82,15 @@ fun MaterialbookWebView(
                 }
             },
             tryOpenMessenger = { messengerUrl ->
-                openMessenger(context, messengerUrl, currentMessengerPkg)
+                val ok = openMessenger(context, messengerUrl, currentMessengerPkg)
+                if (!ok) {
+                    Toast.makeText(
+                        context,
+                        resources.getString(R.string.messenger_redirect_toast),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                ok
             },
         )
     )
