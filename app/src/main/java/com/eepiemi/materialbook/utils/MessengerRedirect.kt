@@ -15,7 +15,7 @@ fun isMessengerUrl(url: String): Boolean {
             // e.g. intent://...#Intent;package=com.facebook.orca;... from FB web buttons
             val pkg = runCatching { Intent.parseUri(url, Intent.URI_INTENT_SCHEME).`package` }
                 .getOrNull() ?: return false
-            return pkg != null && ("orca" in pkg || "messenger" in pkg || "mlite" in pkg)
+            return ("orca" in pkg || "messenger" in pkg || "mlite" in pkg)
         }
         "http", "https" -> { /* host check below */ }
         else -> return false
@@ -28,22 +28,32 @@ fun isMessengerUrl(url: String): Boolean {
 }
 
 /**
- * Opens [url] in the Messenger app ([packageName], default com.facebook.orca).
- * Falls back to the app's launcher entry so even an unresolvable link lands in Messenger.
- * Returns false when the app isn't installed — caller keeps the previous fallback.
+ * Opens the Messenger app ([packageName], default com.facebook.orca).
+ * Prefers the launcher entry (no URL resolution, no interstitial flash).
+ * Falls back to plain VIEW then targeted deep link. False = app not installed.
  */
 fun openMessenger(context: Context, url: String, packageName: String): Boolean {
     val pkg = packageName.ifBlank { DEFAULT_MESSENGER_PACKAGE }
-    val targeted = runCatching {
-        val base = if (url.startsWith("intent:", ignoreCase = true)) {
-            Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+    // Launcher entry first: no URL resolution, so WebView never flashes the
+    // download interstitial while the app opens. (Verified on-device: stays open.)
+    val launch = context.packageManager.getLaunchIntentForPackage(pkg)
+    if (launch != null && runCatching { context.startActivity(launch) }.isSuccess) return true
+    // fb-messenger:// deep links resolve but Messenger drops them instantly (verified
+    // on-device: IntentHandlerActivity flashes then closes); m.me stays open, so use it.
+    val stableUrl = if (url.startsWith("fb-messenger", ignoreCase = true)) "https://m.me/" else url
+    val plain = runCatching {
+        context.startActivity(Intent(Intent.ACTION_VIEW, stableUrl.toUri()).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        })
+    }.isSuccess
+    if (plain) return true
+    return runCatching {
+        val base = if (stableUrl.startsWith("intent:", ignoreCase = true)) {
+            Intent.parseUri(stableUrl, Intent.URI_INTENT_SCHEME)
         } else {
-            Intent(Intent.ACTION_VIEW, url.toUri())
+            Intent(Intent.ACTION_VIEW, stableUrl.toUri())
         }
         base.setPackage(pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(base)
     }.isSuccess
-    if (targeted) return true
-    val launch = context.packageManager.getLaunchIntentForPackage(pkg) ?: return false
-    return runCatching { context.startActivity(launch) }.isSuccess
 }

@@ -14,10 +14,13 @@ class ExternalRequestInterceptor(
         request: WebRequest,
         navigator: WebViewNavigator
     ): WebRequestInterceptResult {
-
-        // Messenger links open in the Messenger app when installed; otherwise fall through
-        // to the previous behavior (in-WebView for https, generic VIEW for deep links).
-        if (request.isForMainFrame && isMessengerUrl(request.url) && tryOpenMessenger(request.url)) {
+        // Messenger deep links can never render anything useful in-WebView: fire the app,
+        // go back so no dead entry stays in history, and Reject the request.
+        // (Reject alone leaves the download interstitial behind when backing out of
+        // Messenger; Modify to about:blank leaves a stuck black screen instead.)
+        if (request.isForMainFrame && isMessengerUrl(request.url)) {
+            tryOpenMessenger(request.url)
+            navigator.navigateBack()
             return WebRequestInterceptResult.Reject
         }
 
