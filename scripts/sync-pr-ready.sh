@@ -24,8 +24,9 @@ REBRAND_PATHS=(
   "app/src/main/java/vip/"
   "app/src/androidTest/java/vip/"
   "app/src/test/java/vip/"
+  "scripts/sync-pr-ready.sh"
+  ".github/workflows/sync-pr-ready.yml"
 )
-
 git fetch origin "$TARGET" "$BASE" >/dev/null 2>&1 || true
 mapfile -t COMMITS < <(git log --format=%H --reverse "origin/$TARGET..origin/$BASE" 2>/dev/null)
 if [ "${#COMMITS[@]}" -eq 0 ]; then
