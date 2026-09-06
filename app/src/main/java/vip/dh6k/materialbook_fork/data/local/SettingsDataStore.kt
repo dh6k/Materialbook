@@ -20,6 +20,7 @@ class SettingsDataStore(private val context: Context) {
         val DESKTOP_LAYOUT = booleanPreferencesKey("desktop_layout")
         val IMMERSIVE_MODE = booleanPreferencesKey("immersive_mode")
         val STICKY_NAVBAR = booleanPreferencesKey("sticky_navbar")
+        val LOCK_ORIENTATION = booleanPreferencesKey("lock_orientation")
         val PINCH_TO_ZOOM = booleanPreferencesKey("pinch_to_zoom")
         val MATERIAL_YOU = booleanPreferencesKey("material_you")
         val AMOLED_BLACK = booleanPreferencesKey("amoled_black")
@@ -67,6 +68,11 @@ class SettingsDataStore(private val context: Context) {
     val stickyNavbar = context.dataStore.data.map { it[STICKY_NAVBAR] ?: true }
     suspend fun setStickyNavbar(stickyNavbar: Boolean) {
         context.dataStore.edit { it[STICKY_NAVBAR] = stickyNavbar }
+    }
+
+    val lockOrientation = context.dataStore.data.map { it[LOCK_ORIENTATION] ?: false }
+    suspend fun setLockOrientation(lockOrientation: Boolean) {
+        context.dataStore.edit { it[LOCK_ORIENTATION] = lockOrientation }
     }
 
     val pinchToZoom = context.dataStore.data.map { it[PINCH_TO_ZOOM] ?: false }

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.Message
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PanoramaWideAngle
 import androidx.compose.material.icons.outlined.Pinch
+import androidx.compose.material.icons.outlined.ScreenLockRotation
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +72,7 @@ fun SettingsContent(
     val desktopLayout = viewModel.desktopLayout.collectAsState()
     val immersiveMode = viewModel.immersiveMode.collectAsState()
     val stickyNavbar = viewModel.stickyNavbar.collectAsState()
+    val lockOrientation = viewModel.lockOrientation.collectAsState()
     val pinchToZoom = viewModel.pinchToZoom.collectAsState()
     val materialYou = viewModel.materialYou.collectAsState()
     val amoledBlack = viewModel.amoledBlack.collectAsState()
@@ -172,6 +174,13 @@ fun SettingsContent(
                     supportingText = stringResource(R.string.keep_the_navigation_bar_visible_while_scrolling),
                     isActive = stickyNavbar.value,
                     onClick = { viewModel.setStickyNavbar(!stickyNavbar.value) }
+                ),
+                SettingsItem(
+                    icon = Icons.Outlined.ScreenLockRotation,
+                    title = stringResource(R.string.lock_orientation_title),
+                    supportingText = stringResource(R.string.lock_orientation_desc),
+                    isActive = lockOrientation.value,
+                    onClick = { viewModel.setLockOrientation(!lockOrientation.value) }
                 ),
                 SettingsItem(
                     icon = Icons.Outlined.Palette,
