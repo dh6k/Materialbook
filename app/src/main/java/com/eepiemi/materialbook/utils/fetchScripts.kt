@@ -16,6 +16,10 @@ data class Script(
     val scriptTitle: String
 )
 
+// Debug use only: force bundled scripts so local JS edits verify on-device
+// without pushing to GitHub first. Release keeps remote fetch + fallback.
+const val USE_LOCAL_SCRIPTS = false
+
 suspend fun fetchScripts(
     scripts: List<Script>,
     fallbackContent: (Int) -> String
@@ -24,15 +28,19 @@ suspend fun fetchScripts(
     return buildString {
         scripts.filter { it.isEnabled }.forEach { script ->
             val content =
-                runCatching {
-                    val res = httpClient.get(SCRIPT_SRC + script.scriptTitle)
-                    if (res.status == HttpStatusCode.OK) {
-                        res.body() as String
-                    } else {
-                        throw Exception()
-                    }
-                }.getOrElse {
+                if (USE_LOCAL_SCRIPTS) {
                     fallbackContent(script.resourceId)
+                } else {
+                    runCatching {
+                        val res = httpClient.get(SCRIPT_SRC + script.scriptTitle)
+                        if (res.status == HttpStatusCode.OK) {
+                            res.body() as String
+                        } else {
+                            throw Exception()
+                        }
+                    }.getOrElse {
+                        fallbackContent(script.resourceId)
+                    }
                 }
             append(content)
         }

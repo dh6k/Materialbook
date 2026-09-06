@@ -1,6 +1,7 @@
 package com.eepiemi.materialbook.ui.screens
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.view.View
 import android.webkit.CookieManager
 import android.widget.Toast
@@ -135,6 +136,15 @@ fun MaterialbookWebView(
     val isDesktop by settingsVM.desktopLayout.collectAsState()
     val isAutoRevert by settingsVM.isRevertDesktop.collectAsState()
     val isAutoDesktop = rememberAutoDesktop()
+
+    val lockOrientation by settingsVM.lockOrientation.collectAsState()
+    LaunchedEffect(lockOrientation) {
+        activity?.requestedOrientation = if (lockOrientation) {
+            ActivityInfo.SCREEN_ORIENTATION_LOCKED
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (isAutoDesktop && !isDesktop) {

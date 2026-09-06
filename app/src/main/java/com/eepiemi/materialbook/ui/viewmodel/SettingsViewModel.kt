@@ -15,6 +15,7 @@ import com.eepiemi.materialbook.data.local.SettingsDataStore.Companion.HIDE_REEL
 import com.eepiemi.materialbook.data.local.SettingsDataStore.Companion.HIDE_STORIES
 import com.eepiemi.materialbook.data.local.SettingsDataStore.Companion.HIDE_SUGGESTED
 import com.eepiemi.materialbook.data.local.SettingsDataStore.Companion.IMMERSIVE_MODE
+import com.eepiemi.materialbook.data.local.SettingsDataStore.Companion.LOCK_ORIENTATION
 import com.eepiemi.materialbook.data.local.SettingsDataStore.Companion.PINCH_TO_ZOOM
 import com.eepiemi.materialbook.data.local.SettingsDataStore.Companion.REMOVE_ADS
 import com.eepiemi.materialbook.data.local.SettingsDataStore.Companion.STICKY_NAVBAR
@@ -63,6 +64,11 @@ class SettingsViewModel(
     val stickyNavbar = dataStore.stickyNavbar.stateIn(
         scope = viewModelScope,
         initialValue = initialPrefs[STICKY_NAVBAR] ?: true,
+        started = SharingStarted.WhileSubscribed()
+    )
+    val lockOrientation = dataStore.lockOrientation.stateIn(
+        scope = viewModelScope,
+        initialValue = initialPrefs[LOCK_ORIENTATION] ?: false,
         started = SharingStarted.WhileSubscribed()
     )
     val pinchToZoom = dataStore.pinchToZoom.stateIn(
@@ -149,6 +155,12 @@ class SettingsViewModel(
     fun setStickyNavbar(stickyNavbar: Boolean) {
         viewModelScope.launch {
             dataStore.setStickyNavbar(stickyNavbar)
+        }
+    }
+
+    fun setLockOrientation(lockOrientation: Boolean) {
+        viewModelScope.launch {
+            dataStore.setLockOrientation(lockOrientation)
         }
     }
 
