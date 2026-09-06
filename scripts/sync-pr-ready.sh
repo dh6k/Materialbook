@@ -15,15 +15,11 @@ BASE="main"
 DRY_RUN=false
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=true
 
-# Paths owned by the fork rebrand — never mirrored.
 REBRAND_PATHS=(
   "README.md"
   "CHANGE.md"
   "CHANGE.txt"
   "app/build.gradle.kts"
-  "app/src/main/java/vip/"
-  "app/src/androidTest/java/vip/"
-  "app/src/test/java/vip/"
   "scripts/sync-pr-ready.sh"
   ".github/workflows/sync-pr-ready.yml"
 )
