@@ -45,12 +45,9 @@ is_rebrand_only() {
 }
 
 if ! $DRY_RUN; then
-  git checkout -q "$TARGET"
+  git checkout -q -f "$TARGET"
   git reset -q --hard "origin/$TARGET"
 fi
-mirrored=()
-skipped_rebrand=()
-conflicted=()
 
 for sha in "${COMMITS[@]}"; do
   subject="$(git log -1 --format=%s "$sha")"
@@ -76,17 +73,18 @@ for sha in "${COMMITS[@]}"; do
   # Retry with the package rename mapped back: vip/dh6k/materialbook_fork paths
   # and package strings become com/eepiemi/materialbook on pr_ready.
   # Only app sources are mapped; docs/infra never belong on pr_ready.
+  map_patch="$(mktemp)"
   git diff "$sha^" "$sha" -- 'app/src' \
       | sed -e 's|vip/dh6k/materialbook_fork|com/eepiemi/materialbook|g' \
-            -e 's|vip\.dh6k\.materialbook_fork|com.eepiemi.materialbook|g' \
-      | git apply --3way >/dev/null 2>&1
-  if [ "${PIPESTATUS[0]}" -eq 0 ] && [ "${PIPESTATUS[1]}" -eq 0 ] \
+            -e 's|vip\.dh6k\.materialbook_fork|com.eepiemi.materialbook|g' > "$map_patch"
+  if [ -s "$map_patch" ] && git apply --3way "$map_patch" >/dev/null 2>&1 \
       && git add -A && git commit -q -C "$sha"; then
+    rm -f "$map_patch"
     mirrored+=("$sha $subject (path-mapped)")
     continue
   fi
+  rm -f "$map_patch"
   git reset -q --hard HEAD
-  conflicted+=("$sha $subject")
 done
 
 if ! $DRY_RUN && [ "${#mirrored[@]}" -gt 0 ]; then
