@@ -1,3 +1,10 @@
+## Materialbook Fork - v1.2.3
+
+<ins>**Changelog:**</ins>
+
+* Fix: Photo viewer first-open black screen fixed properly (negative-bottom stretch reverted, photo scroll-centered, no DOM mutation persists).
+* Fix: Remote scripts now fetch from the fork repo (was still pointing at upstream).
+
 ## Materialbook Fork - v1.2.2
 
 <ins>**Changelog:**</ins>
