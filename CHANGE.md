@@ -1,3 +1,9 @@
+## Materialbook Fork - v1.2.5
+
+<ins>**Changelog:**</ins>
+
+* Fix: Photo viewer first-open black/slipped screen fixed for good (viewer center loop no longer observer-dependent, early pre-scroll, late pass for slow decode).
+
 ## Materialbook Fork - v1.2.4
 
 <ins>**Changelog:**</ins>

@@ -108,11 +108,16 @@ jobs:
 
       - name: Prepare Changelog
         run: |
-          if [ ! -f CHANGE.md ]; then
-            echo "CHANGE.md not found, using default changelog"
-            echo "Release ${{ github.ref_name || github.event.inputs.release_tag }}" > CHANGE.txt
-          else
-            cp CHANGE.md CHANGE.txt
+          TAG="${{ github.event.inputs.release_tag || github.ref_name }}"
+          VER="${TAG#v}"
+          # Extract only this version's section (up to the next version header).
+          awk -v ver="$VER" '
+            $0 ~ "^## .*v" ver "$" { capture = 1; print; next }
+            capture && /^## / { exit }
+            capture { print }
+          ' CHANGE.md > CHANGE.txt
+          if [ ! -s CHANGE.txt ]; then
+            echo "Release $TAG" > CHANGE.txt
           fi
 
       - name: Create Release
