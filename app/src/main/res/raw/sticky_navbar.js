@@ -56,53 +56,91 @@
 
     const isPhotoViewer = () => window.location.pathname.includes('/photo.php');
 
-    const stripViewerHolderMargin = () => {
-        // Viewer holder margin-top is computed against our forced feed layout
-        // (SPA keeps the same document), landing the photo below the viewport
-        // (black screen on first open). FB's healthy layout has no holder
-        // margin, so drop it. Gated on the flag below so a clean direct photo
-        // load is never touched.
-        if (!window._mbForcedBody) return;
-        const img = document.querySelector('.hscroller img');
-        const holder = img?.parentElement;
-        if (!holder?.style.marginTop) return;
-        holder.style.removeProperty('margin-top');
-        // Stripping alone pins the photo to the top; re-center it if it is
-        // still (partly) outside the visible area.
-        const r = img.getBoundingClientRect();
-        if (r.top < 0 || r.bottom > window.innerHeight) {
-            img.scrollIntoView({ block: 'center', inline: 'nearest' });
-        }
-    };
-
-    const revertViewerStyles = () => {
-        // Photo viewer reuses feed scroller markup; feed-only body forcing can
-        // leave the media pushed out of view (black screen on first open).
-        // SPA keeps the same document, so drop each value we forced.
+    // Option B: only revert nodes WE touched on feed (body + feed scroller
+    // content + fixed navbars). Never touch the viewer's .hscroller holder:
+    // FB owns that layout, and mutating it persists across SPA reuses
+    // (photo stuck to top on later opens).
+    const revertOurFeedForcing = () => {
         const s = document.body.style;
         if (s.paddingTop === '0px') s.paddingTop = '';
         if (s.marginTop === '0px') s.marginTop = '';
         if (s.overflow === 'visible') s.overflow = '';
         if (s.height === '100%') s.height = '';
-        stripViewerHolderMargin();
+        const off = window._mbFeedOffset;
+        if (window._mbScrollContent?.isConnected) {
+            if (!off || window._mbScrollContent.style.marginTop === off)
+                window._mbScrollContent.style.removeProperty('margin-top');
+        } else window._mbScrollContent = null;
+        if (window._mbFeedScroller?.isConnected) {
+            if (!off || window._mbFeedScroller.style.paddingTop === off)
+                window._mbFeedScroller.style.removeProperty('padding-top');
+        } else window._mbFeedScroller = null;
+        for (const k of ['_mbFeedNavbar', '_mbFeedTabbar']) {
+            const el = window[k];
+            if (el?.isConnected) {
+                el.style.removeProperty('position');
+                el.style.removeProperty('top');
+                el.style.removeProperty('left');
+                el.style.removeProperty('width');
+                el.style.removeProperty('z-index');
+            } else window[k] = null;
+        }
     };
 
-    const ensureViewerMarginWatcher = () => {
-        // Holder margin can arrive via innerHTML birth or later style writes;
-        // the body childList observer below misses pure style writes.
-        // ponytail: document-wide style watch, viewer-only + flag-gated, idle
-        // cost is string checks per batch; installed once per document.
-        if (window._mbViewerMarginWatcher) return;
-        window._mbViewerMarginWatcher = true;
-        new MutationObserver(() => {
-            if (!window.location.pathname.includes('/photo.php')) return;
-            stripViewerHolderMargin();
-        }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+    // Viewer photo can land below the visible area on first open: FB pins the
+    // image with top + negative bottom measured while our feed forcing was
+    // still on, stretching it past its natural ratio. Drop the bad bottom so
+    // the photo keeps its ratio (holder math is FB's own and stays), then
+    // scroll-center. No margin mutation, so nothing sticks on later opens.
+    const centerViewerPhoto = () => {
+        const img = document.querySelector('.hscroller img');
+        const sc = document.querySelector('.hscroller');
+        if (!img || !sc) return;
+        if (!img.complete || !img.naturalWidth || !img.clientWidth) {
+            // Image not loaded yet when the observer pass ran; retry once on load.
+            if (!img._mbCenterHook) {
+                img._mbCenterHook = true;
+                img.addEventListener('load', () => centerViewerPhoto(), { once: true });
+            }
+            return;
+        }
+        const cs = getComputedStyle(img);
+        const natH = img.clientWidth * img.naturalHeight / img.naturalWidth;
+        if (parseFloat(cs.bottom) < 0 && img.clientHeight > natH * 1.5) {
+            img.style.setProperty('height', 'auto', 'important');
+            img.style.setProperty('bottom', 'auto', 'important');
+        }
+        const r = img.getBoundingClientRect();
+        if (r.height <= 0) return;
+        const outTop = r.top < 0, outBottom = r.bottom > window.innerHeight;
+        if (!outTop && !outBottom) return;
+        // +4px overshoot so the last pixel row truly fits (buttons show only
+        // when rect.bottom <= innerHeight).
+        sc.scrollTop = Math.max(0, Math.round(r.top + sc.scrollTop - (window.innerHeight - r.height) / 2 + 4));
+        // FB can snap scroll back; re-check once next frame (max 3 passes).
+        img._mbCenterN = (img._mbCenterN || 0) + 1;
+        if (img._mbCenterN < 3) requestAnimationFrame(() => centerViewerPhoto());
     };
-
+    // Hook nav itself so forcing is gone BEFORE FB renders/measures viewer.
+    const installViewerNavHook = () => {
+        if (window._mbNavHook) return;
+        window._mbNavHook = true;
+        const check = () => {
+            if (window.location.pathname.includes('/photo.php')) revertOurFeedForcing();
+        };
+        const wrap = (fn) => function(...a) {
+            const r = fn.apply(this, a);
+            try { check(); } catch (e) {}
+            return r;
+        };
+        history.pushState = wrap(history.pushState);
+        history.replaceState = wrap(history.replaceState);
+        window.addEventListener('popstate', check);
+    };
     const applyStyles = () => {
         if (isPhotoViewer()) {
-            revertViewerStyles();
+            revertOurFeedForcing();
+            centerViewerPhoto();
             return;
         }
         const navbar = document.querySelector('div[data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][data-focusable="true"].m');
@@ -136,7 +174,9 @@
             const offset = (hasLogo ? navbarHeight : 0) + (hasFeed ? tabbarHeight : 0);
             const scrollContent = scroller.querySelector(':scope > div:not(.pull-to-refresh-spinner-container)');
             scrollContent ? scrollContent.style.marginTop = offset + 'px' : scroller.style.paddingTop = offset + 'px';
-
+            window._mbScrollContent = scrollContent || null;
+            window._mbFeedScroller = scroller;
+            window._mbFeedOffset = offset + 'px';
             if (window.isFeed()) scroller.style.paddingBottom = '0';
 
             const spinnerContainer = scroller.querySelector('.pull-to-refresh-spinner-container');
@@ -147,6 +187,8 @@
             const spinner = scroller.querySelector('.pull-to-refresh-spinner');
             if (spinner) spinner.style.margin = '0 auto';
         }
+        if (hasLogo) window._mbFeedNavbar = navbar; else window._mbFeedNavbar = null;
+        if (hasFeed) window._mbFeedTabbar = tabbar; else window._mbFeedTabbar = null;
 
         Object.assign(document.body.style, {
             paddingTop: '0',
@@ -154,12 +196,8 @@
             overflow: 'visible',
             height: '100%'
         });
-        // Mark that our feed forcing touched this document, so the viewer
-        // revert above only strips margins we are responsible for.
-        window._mbForcedBody = true;
     };
-
-    ensureViewerMarginWatcher();
+    installViewerNavHook();
     applyStyles();
     new MutationObserver(applyStyles).observe(document.body, { childList: true, subtree: true });
 })();
