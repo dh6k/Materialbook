@@ -199,7 +199,7 @@
     };
     installViewerNavHook();
     applyStyles();
-    // ponytail: feed-only — viewer has its own revert+center path inside
-    // applyStyles; skip feed-forcing rescan while viewing a post.
-    new MutationObserver(() => { if (!isPhotoViewer() && window.location.pathname === '/') applyStyles(); }).observe(document.body, { childList: true, subtree: true });
+    // ponytail: feed scan is expensive — run it on feed only. The viewer
+    // still needs applyStyles (its revert+center branch returns early).
+    new MutationObserver(() => { if (isPhotoViewer() || window.location.pathname === '/') applyStyles(); }).observe(document.body, { childList: true, subtree: true });
 })();
