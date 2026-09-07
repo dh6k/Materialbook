@@ -1,3 +1,10 @@
+## Materialbook Fork - v1.2.2
+
+<ins>**Changelog:**</ins>
+
+* Fix: Feed no longer slows down the more posts you open (bundle guard + observer debounce + regex precompile).
+* Fix: Hide Facebook "Mở ứng dụng / Open app" bottom banner.
+
 ## Materialbook Fork - v1.2.1
 
 <ins>**Changelog:**</ins>

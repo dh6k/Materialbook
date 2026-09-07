@@ -21,8 +21,8 @@ extensions.configure<ApplicationExtension> {
         applicationId = "vip.dh6k.materialbook_fork"
         minSdk = 23
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.2.1"
+        versionCode = 17
+        versionName = "1.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
