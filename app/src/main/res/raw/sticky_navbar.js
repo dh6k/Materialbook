@@ -96,11 +96,21 @@
         const img = document.querySelector('.hscroller img');
         const sc = document.querySelector('.hscroller');
         if (!img || !sc) return;
+        // Early: holder exists but image not decoded yet. Pre-scroll by holder
+        // geometry so the photo is near viewport when it paints, then refine.
         if (!img.complete || !img.naturalWidth || !img.clientWidth) {
-            // Image not loaded yet when the observer pass ran; retry once on load.
             if (!img._mbCenterHook) {
                 img._mbCenterHook = true;
-                img.addEventListener('load', () => centerViewerPhoto(), { once: true });
+                img.addEventListener('load', () => {
+                    img._mbCenterN = 0;
+                    centerViewerPhoto();
+                }, { once: true });
+            }
+            const hr = img.parentElement?.getBoundingClientRect();
+            if (hr && hr.height > 0) {
+                const outTop = hr.top < 0, outBottom = hr.bottom > window.innerHeight;
+                if (outTop || outBottom)
+                    sc.scrollTop = Math.max(0, Math.round(hr.top + sc.scrollTop - (window.innerHeight - hr.height) / 2 + 10));
             }
             return;
         }
