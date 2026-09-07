@@ -81,6 +81,9 @@
     // so legacy sponsoredRegex alone misses it. Accept bare labels too (exact match
     // after stripping trailing delimiters), then climb to the post container.
     const sponsoredSet = new Set(sponsoredTexts.map(s => s.toLowerCase()));
+    const sponsoredWordRegexes = sponsoredTexts.map(
+        w => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+    );
 
     function isSponsoredLabel(text) {
         if (!text) return false;
@@ -159,13 +162,9 @@
     observer.observe(document.body, { childList: true, subtree: true });
 
     function containsSponsoredText(text) {
-        const lowerText = text.toLowerCase();
-        return sponsoredTexts.some(word => {
-            const lowerWord = word.toLowerCase();
-            // Use word boundary regex to match whole words only
-            const wordBoundaryRegex = new RegExp(`\\b${lowerWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-            return wordBoundaryRegex.test(lowerText);
-        });
+        const lower = text.toLowerCase();
+        for (const re of sponsoredWordRegexes) if (re.test(lower)) return true;
+        return false;
     }
 
 

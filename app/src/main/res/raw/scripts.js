@@ -251,10 +251,22 @@
 if (!window._mbBannerObserver) {
     window._mbBannerObserver = new MutationObserver(() => {
 
+      // ponytail: FB's "Mở ứng dụng / Open app" smart banner lives in
+      // .bottom.fixed-container — same bucket as the height<80 banner above.
+      // Match the button text (not container text) so typing the phrase in
+      // the comment composer can't nuke it. Runs before the feed-ready
+      // early-return so the banner dies even while the feed is loading.
+      const banner = document.querySelector('.bottom.fixed-container');
+      const bannerBtn = banner?.querySelector('div[role="button"]');
+      if (bannerBtn && /Mở ứng dụng|Open (in )?app/i.test(bannerBtn.textContent || '')) {
+        banner.style.display = 'none';
+        return;
+      }
+
       if (location.pathname === '/'
       && document.querySelector('div[role="button"][aria-label*="Facebook"]') === null) return;
 
-      const element = document.querySelector('.bottom.fixed-container');
+      const element = banner;
       if (
         element &&
         !element.hasAttribute('data-shift-on-keyboard-shown')
