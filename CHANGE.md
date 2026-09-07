@@ -1,3 +1,9 @@
+## Materialbook Fork - v1.2.4
+
+<ins>**Changelog:**</ins>
+
+* Fix: Back-navigation stays light on weak devices (feed observers sleep off-feed, scans deferred off back-paint via rAF).
+
 ## Materialbook Fork - v1.2.3
 
 <ins>**Changelog:**</ins>
