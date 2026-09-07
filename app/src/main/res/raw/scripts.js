@@ -9,15 +9,18 @@
 // Feed identifier
 (() => {
     window.isFeed = () => {
+        // ponytail: cheap string check first — the span scan below walks the
+        // whole DOM, and every guarded observer calls isFeed per batch.
         const isHomeUrl = window.location.pathname === '/' &&
             (window.location.hostname === 'm.facebook.com' || window.location.hostname === 'www.facebook.com');
+        if (!isHomeUrl) return false;
 
-        if (window.isDesktopMode()) return isHomeUrl;
+        if (window.isDesktopMode()) return true;
 
         const hasSpecialButton = Array.from(document.querySelectorAll('[role="button"] span'))
             .some(span => span.textContent === '󱥆');
 
-        return isHomeUrl && hasSpecialButton;
+        return hasSpecialButton;
     };
 })();
 
@@ -164,6 +167,9 @@
   };
 
   const updateText = () => {
+    // ponytail: caption-selectable only matters on feed; skip while viewing
+    // a post so back-navigation batch doesn't pay this scan.
+    if (!window.isFeed()) return;
     document.querySelectorAll('.native-text').forEach(makeSelectable);
   };
 

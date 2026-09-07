@@ -199,5 +199,7 @@
     };
     installViewerNavHook();
     applyStyles();
-    new MutationObserver(applyStyles).observe(document.body, { childList: true, subtree: true });
+    // ponytail: feed-only — viewer has its own revert+center path inside
+    // applyStyles; skip feed-forcing rescan while viewing a post.
+    new MutationObserver(() => { if (!isPhotoViewer() && window.location.pathname === '/') applyStyles(); }).observe(document.body, { childList: true, subtree: true });
 })();
