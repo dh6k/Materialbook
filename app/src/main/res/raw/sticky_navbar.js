@@ -106,7 +106,7 @@
         }
         const cs = getComputedStyle(img);
         const natH = img.clientWidth * img.naturalHeight / img.naturalWidth;
-        if (parseFloat(cs.bottom) < 0 && img.clientHeight > natH * 1.5) {
+        if (parseFloat(cs.bottom) < 0 && img.clientHeight > natH * 1.05) {
             img.style.setProperty('height', 'auto', 'important');
             img.style.setProperty('bottom', 'auto', 'important');
         }
