@@ -131,12 +131,35 @@
         img._mbCenterN = (img._mbCenterN || 0) + 1;
         if (img._mbCenterN < 5) requestAnimationFrame(() => centerViewerPhoto());
     };
-    // Hook nav itself so forcing is gone BEFORE FB renders/measures viewer.
+    // Independent loop: observer may fire before the viewer DOM exists (miss
+    // entirely). On viewer entry, drive center for ~0.5s regardless, plus one
+    // late pass for late-decoding images. Scroll-only, resets per entry.
+    const kickViewerLoop = () => {
+        if (window._mbLoopId === location.href) return;
+        window._mbLoopId = location.href;
+        let f = 0;
+        const step = () => {
+            try { centerViewerPhoto(); } catch (e) {}
+            if (!window.location.pathname.includes('/photo.php')) return;
+            if (++f < 30) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+        setTimeout(() => {
+            try {
+                const img = document.querySelector('.hscroller img');
+                if (img) img._mbCenterN = 0;
+                centerViewerPhoto();
+            } catch (e) {}
+        }, 600);
+    };
     const installViewerNavHook = () => {
         if (window._mbNavHook) return;
         window._mbNavHook = true;
         const check = () => {
-            if (window.location.pathname.includes('/photo.php')) revertOurFeedForcing();
+            if (window.location.pathname.includes('/photo.php')) {
+                revertOurFeedForcing();
+                kickViewerLoop();
+            }
         };
         const wrap = (fn) => function(...a) {
             const r = fn.apply(this, a);
@@ -151,6 +174,7 @@
         if (isPhotoViewer()) {
             revertOurFeedForcing();
             centerViewerPhoto();
+            kickViewerLoop();
             return;
         }
         const navbar = document.querySelector('div[data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][data-focusable="true"].m');
