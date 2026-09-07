@@ -151,13 +151,24 @@
 
     hideAllAds();
 
+    let adScheduled = false;
     const observer = new MutationObserver(mutations => {
-        for (const mutation of mutations) {
-            for (const node of mutation.addedNodes) {
-                if (!(node instanceof HTMLElement)) continue;
-                hideAllAds(node);
+        // ponytail: back-navigation swaps the whole tree in one batch —
+        // sleep while viewing a post so 20 observers don't all rescan.
+        if (window.location.pathname !== '/') return;
+        // ponytail: defer off the back-paint — hide after first frame, not during.
+        if (adScheduled) return;
+        adScheduled = true;
+        const batch = mutations;
+        requestAnimationFrame(() => {
+            adScheduled = false;
+            for (const mutation of batch) {
+                for (const node of mutation.addedNodes) {
+                    if (!(node instanceof HTMLElement)) continue;
+                    hideAllAds(node);
+                }
             }
-        }
+        });
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
@@ -298,10 +309,9 @@
     }
 
     // Initial cleanup
-    removeReelAds();
-
-    // Watch for dynamically added reel ads
     const reelObserver = new MutationObserver(mutations => {
+        if (window.location.pathname !== '/') return;
+
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
