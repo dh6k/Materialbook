@@ -24,8 +24,14 @@ suspend fun fetchScripts(
     scripts: List<Script>,
     fallbackContent: (Int) -> String
 ): String {
-    val httpClient = HttpClient(OkHttp)
-    return buildString {
+    return HttpClient(OkHttp).use { httpClient ->
+        buildString {
+        // ponytail: FB is an SPA, same document lives across feed -> post -> back,
+        // and MaterialbookWV re-evaluates this bundle on every Finished. Without
+        // this guard each navigation stacks ~20 more MutationObservers on the
+        // same document, so response gets slower the more posts you tap.
+        // window-flags reset on real reload, so refresh() still reinstalls cleanly.
+        append("if(!window._mbBundleInjected){window._mbBundleInjected=true;")
         scripts.filter { it.isEnabled }.forEach { script ->
             val content =
                 if (USE_LOCAL_SCRIPTS) {
@@ -42,7 +48,11 @@ suspend fun fetchScripts(
                         fallbackContent(script.resourceId)
                     }
                 }
+            append('\n')
             append(content)
+        }
+        append('\n')
+        append("}")
         }
     }
 }
