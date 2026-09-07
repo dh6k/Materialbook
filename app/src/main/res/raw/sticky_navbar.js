@@ -117,9 +117,9 @@
         // +10px overshoot so the last pixel row truly fits (buttons show only
         // when rect.bottom <= innerHeight; FB can snap 1-2px back after scroll).
         sc.scrollTop = Math.max(0, Math.round(r.top + sc.scrollTop - (window.innerHeight - r.height) / 2 + 10));
-        // FB can snap scroll back; re-check once next frame (max 3 passes).
+        // FB can snap scroll back; re-check next frames (5 passes for weak devices).
         img._mbCenterN = (img._mbCenterN || 0) + 1;
-        if (img._mbCenterN < 3) requestAnimationFrame(() => centerViewerPhoto());
+        if (img._mbCenterN < 5) requestAnimationFrame(() => centerViewerPhoto());
     };
     // Hook nav itself so forcing is gone BEFORE FB renders/measures viewer.
     const installViewerNavHook = () => {
